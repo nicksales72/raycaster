@@ -18,6 +18,7 @@ def get_line_eq(player_posx, player_posy, mouse_posx, mouse_posy):
         return m, b
 
 def draw_intersection_points(surface, m, b, player_posx, player_posy, mouse_posx, mouse_posy, width, height):
+    # there is probably a better way to do this
     if mouse_posx > player_posx and mouse_posy > player_posy:
         for x in range(0, mouse_posx, width // 16):
             if x <= player_posx:
@@ -28,7 +29,7 @@ def draw_intersection_points(surface, m, b, player_posx, player_posy, mouse_posx
                 continue
             py.draw.circle(surface, "red", ((y - b) / m, y), 10)
     elif mouse_posx < player_posx and mouse_posy > player_posy:
-        for x in range(1280, mouse_posx, -(width // 16)):
+        for x in range(width, mouse_posx, -(width // 16)):
             if x >= player_posx:
                 continue
             py.draw.circle(surface, "red", (x, m * x + b), 10)
@@ -41,16 +42,16 @@ def draw_intersection_points(surface, m, b, player_posx, player_posy, mouse_posx
             if x <= player_posx:
                 continue
             py.draw.circle(surface, "red", (x, m * x + b), 10)
-        for y in range(720, mouse_posy, -(height // 9)):
+        for y in range(height, mouse_posy, -(height // 9)):
             if y >= player_posy:
                 continue
             py.draw.circle(surface, "red", ((y - b) / m, y), 10)
     elif mouse_posx < player_posx and mouse_posy < player_posy:
-        for x in range(1280, mouse_posx, -(width // 16)):
+        for x in range(width, mouse_posx, -(width // 16)):
             if x >= player_posx:
                 continue
             py.draw.circle(surface, "red", (x, m * x + b), 10)
-        for y in range(720, mouse_posy, -(height // 9)):
+        for y in range(height, mouse_posy, -(height // 9)):
             if y >= player_posy:
                 continue
             py.draw.circle(surface, "red", ((y - b) / m, y), 10)
