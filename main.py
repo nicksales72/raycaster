@@ -7,11 +7,11 @@ class Vector2:
         self.y = y
 
     def get_line_eq(self, other:Vector2) -> tuple[float, float]:
-        if (other.x - self.x) != 0:
+        if (other.x - self.x) != 0: # division by 0
             m = (other.y - self.y) / (other.x - self.x)
             b = self.y - (m * self.x)
             return m, b
-        else: return 0, 0 # temporary
+        else: return 0, 0 
 
 def create_grid(surface, width: int, height: int) -> None:
     # for 16:9 displays for now
@@ -26,44 +26,40 @@ def player_to_mouse(surface, player_pos:Vector2, mouse_pos:Vector2) -> None:
 def draw_intersection_points(surface, m:float, b:float, 
                              width:int, height:int,
                              player_pos:Vector2, mouse_pos:Vector2) -> None:
-    # there is probably a better way to do this
-    if mouse_pos.x > player_pos.x and mouse_pos.y > player_pos.y:
-        for x in range(0, mouse_pos.x, width // 16):
-            if x <= player_pos.x:
-                continue
-            py.draw.circle(surface, "red", (x, m * x + b), 10)
-        for y in range(0, mouse_pos.y, height // 9):
-            if y <= player_pos.y:
-                continue
-            py.draw.circle(surface, "red", ((y - b) / m, y), 10)
-    elif mouse_pos.x < player_pos.x and mouse_pos.y > player_pos.y:
-        for x in range(width, mouse_pos.x, -(width // 16)):
-            if x >= player_pos.x:
-                continue
-            py.draw.circle(surface, "red", (x, m * x + b), 10)
-        for y in range(0, mouse_pos.y, height // 9):
-            if y <= player_pos.y:
-                continue
-            py.draw.circle(surface, "red", ((y - b) / m, y), 10)
-    elif mouse_pos.x > player_pos.x and mouse_pos.y < player_pos.y:
-        for x in range(0, mouse_pos.x, width // 16):
-            if x <= player_pos.x:
-                continue
-            py.draw.circle(surface, "red", (x, m * x + b), 10)
-        for y in range(height, mouse_pos.y, -(height // 9)):
-            if y >= player_pos.y:
-                continue
-            py.draw.circle(surface, "red", ((y - b) / m, y), 10)
-    elif mouse_pos.x < player_pos.x and mouse_pos.y < player_pos.y:
-        for x in range(width, mouse_pos.x, -(width // 16)):
-            if x >= player_pos.x:
-                continue
-            py.draw.circle(surface, "red", (x, m * x + b), 10)
-        for y in range(height, mouse_pos.y, -(height // 9)):
-            if y >= player_pos.y:
-                continue
-            py.draw.circle(surface, "red", ((y - b) / m, y), 10)
+    step_x = width // 16
+    step_y = height // 9 
 
+    dx = mouse_pos.x - player_pos.x
+    dy = mouse_pos.y - player_pos.y
+
+    step_x *= 1 if dx > 0 else -1
+    step_y *= 1 if dy > 0 else -1
+
+    if dx > 0:
+        for x in range(0, mouse_pos.x, step_x):
+            if x <= player_pos.x:
+                continue
+            y = m * x + b
+            py.draw.circle(surface, "red", (x, y), 10)
+    else:
+        for x in range(width, mouse_pos.x, step_x):
+            if x >= player_pos.x:
+                continue
+            y = m * x + b
+            py.draw.circle(surface, "red", (x, y), 10)
+
+    if dy > 0:
+        for y in range(0, mouse_pos.y, step_y):
+            if y <= player_pos.y:
+                continue
+            x = (y - b) / m
+            py.draw.circle(surface, "red", (x, y), 10)
+    else:
+        for y in range(height, mouse_pos.y, step_y):
+            if y >= player_pos.y:
+                continue
+            x = (y - b) / m
+            py.draw.circle(surface, "red", (x, y), 10)
 
 def main():
     width = 1280
