@@ -1,17 +1,11 @@
 from __future__ import annotations
+from dataclasses import dataclass 
 import pygame as py
 
+@dataclass
 class Vector2:
-    def __init__(self, x:float, y:float):
-        self.x = x
-        self.y = y
-
-    def get_line_eq(self, other:Vector2) -> tuple[float, float]:
-        if (other.x - self.x) != 0: # division by 0
-            m = (other.y - self.y) / (other.x - self.x)
-            b = self.y - (m * self.x)
-            return m, b
-        else: return 0, 0 
+    x:float
+    y:float
 
 class MiniMap:
     def __init__(self, width:int, height:int):
@@ -19,56 +13,51 @@ class MiniMap:
         self.height = height
         self.surface = None
         self.clock = None
+        self.grid_surface = None 
+
+        self.grid_x_step = width // 16 
+        self.grid_y_step = height // 9
 
     def create_surface(self) -> None:
         py.init()
         self.surface = py.display.set_mode((self.width, self.height))
         self.clock = py.time.Clock()
+        self._create_grid_surface()
 
-    def create_grid(self) -> None:
-        for x in range(0, self.width + 1, self.width // 16):
-            py.draw.line(self.surface, "white", (x, 0), (x, self.height))
-        for y in range(0, self.height + 1, self.height // 9):
-            py.draw.line(self.surface, "white", (0, y), (self.width, y))
+    def _create_grid_surface(self) -> None:
+        surf = py.Surface((self.width, self.height))
+        surf.fill("black")
 
-    def player_to_mouse(self, player_pos:Vector2, mouse_pos:Vector2) -> None:
-        py.draw.line(self.surface, "white", (player_pos.x, player_pos.y), (mouse_pos.x, mouse_pos.y))
+        for x in range(0, self.width + 1, self.grid_x_step):
+            py.draw.line(surf, "white", (x, 0), (x, self.height))
+        for y in range(0, self.height + 1, self.grid_y_step):
+            py.draw.line(surf, "white", (0, y), (self.width, y))
 
-    def draw_intersection_points(self, m:float, b:float, player_pos:Vector2, mouse_pos:Vector2) -> None:
-        step_x = self.width // 16
-        step_y = self.height // 9 
+        self.grid_surface = surf
 
-        dx = mouse_pos.x - player_pos.x
-        dy = mouse_pos.y - player_pos.y
+    def compute_intersections(self, A:Vector2, B:Vector2): 
+        Ax, Ay = A.x, A.y
+        Bx, By = B.x, B.y
 
-        step_x *= 1 if dx > 0 else -1
-        step_y *= 1 if dy > 0 else -1
+        dx = Bx - Ax
+        dy = By - Ay
 
-        if dx > 0:
-            for x in range(0, mouse_pos.x, step_x):
-                if x <= player_pos.x:
-                    continue
-                y = m * x + b
-                py.draw.circle(self.surface, "red", (x, y), 10)
-        else:
-            for x in range(self.width, mouse_pos.x, step_x):
-                if x >= player_pos.x:
-                    continue
-                y = m * x + b
-                py.draw.circle(self.surface, "red", (x, y), 10)
+        results = []
+        for k in range(0, self.width + 1, self.grid_x_step):
+            if dx != 0:
+                t = (k - Ax) / dx
+                if 0 <= t <= 1: 
+                    y = Ay + t * dy
+                    results.append((k, y))
 
-        if dy > 0:
-            for y in range(0, mouse_pos.y, step_y):
-                if y <= player_pos.y:
-                    continue
-                x = (y - b) / m
-                py.draw.circle(self.surface, "red", (x, y), 10)
-        else:
-            for y in range(self.height, mouse_pos.y, step_y):
-                if y >= player_pos.y:
-                    continue
-                x = (y - b) / m
-                py.draw.circle(self.surface, "red", (x, y), 10)
+        for k in range(0, self.width + 1, self.grid_y_step):
+            if dy != 0:
+                t = (k - Ay) / dy
+                if 0 <= t <= 1: 
+                    x = Ax + t * dx
+                    results.append((x, k))
+
+        return results
 
     def surface_loop(self, player_pos:Vector2) -> None:
         running = True
@@ -76,17 +65,18 @@ class MiniMap:
             for event in py.event.get():
                 if event.type == py.QUIT: running = False
 
-            self.surface.fill("black")
-            self.create_grid()
+            self.surface.blit(self.grid_surface, (0, 0)) # draws grid as surface onto the surface
 
-            player = py.draw.circle(self.surface, "blue", (player_pos.x, player_pos.y), 10)
-            mouse_posx, mouse_posy = py.mouse.get_pos()
-            mouse_pos = Vector2(mouse_posx, mouse_posy)
+            mx, my = py.mouse.get_pos()
+            mouse_pos = Vector2(mx, my)
 
-            self.player_to_mouse(player_pos, mouse_pos) 
-            m, b = player_pos.get_line_eq(mouse_pos)
+            py.draw.line(self.surface, "white", (player_pos.x, player_pos.y), (mouse_pos.x, mouse_pos.y))
 
-            self.draw_intersection_points(m, b, player_pos, mouse_pos)
+            pts = self.compute_intersections(player_pos, mouse_pos)
+            for x, y in pts:
+                py.draw.circle(self.surface, "red", (int(x), int(y)), 6)
+
+            py.draw.circle(self.surface, "blue", (int(player_pos.x), int(player_pos.y)), 10)
 
             py.display.flip()
             self.clock.tick(60)
