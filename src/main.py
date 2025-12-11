@@ -35,7 +35,7 @@ class MiniMap:
 
         self.grid_surface = surf
 
-    def compute_intersections(self, A:Vector2, B:Vector2): 
+    def compute_intersections(self, A:Vector2, B:Vector2) -> list[tuple[float, float]]: 
         Ax, Ay = A.x, A.y
         Bx, By = B.x, B.y
 
@@ -50,7 +50,7 @@ class MiniMap:
                     y = Ay + t * dy
                     results.append((k, y))
 
-        for k in range(0, self.width + 1, self.grid_y_step):
+        for k in range(0, self.height + 1, self.grid_y_step):
             if dy != 0:
                 t = (k - Ay) / dy
                 if 0 <= t <= 1: 
